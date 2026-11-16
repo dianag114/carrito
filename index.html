@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101827" />
+  <meta name="description" content="Panel de control y monitoreo para vehículo IoT." />
+  <title>Vehículo IoT | Control y monitoreo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#inicio"><span class="brand-mark">V</span><span>VEHÍCULO<span class="brand-light">.IOT</span></span></a>
+      <div class="side-label">PLATAFORMA</div>
+      <nav class="nav-list">
+        <a class="nav-link active" href="#control"><span>⌘</span> Control remoto</a>
+        <a class="nav-link" href="#monitoreo"><span>◉</span> Monitoreo</a>
+        <a class="nav-link" href="#historial"><span>≋</span> Historial</a>
+        <a class="nav-link" href="#demos"><span>▶</span> Demostraciones</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="connection-card"><span class="pulse-dot" id="sideDot"></span><div><b id="sideConnection">Sin conectar</b><small>Conexión con API</small></div></div>
+        <button class="side-settings" id="openSettings"><span>⚙</span> Configuración</button>
+      </div>
+    </aside>
+
+    <main class="main-content" id="inicio">
+      <header class="topbar">
+        <div><div class="eyebrow">SISTEMA DE CONTROL · IOT</div><h1>Panel de vehículo</h1></div>
+        <div class="top-actions"><div class="status-pill" id="apiStatus"><i class="status-dot"></i><span>API desconectada</span></div><button class="icon-button" id="refreshBtn" title="Actualizar">↻</button><div class="avatar">IOT</div></div>
+      </header>
+
+      <section class="welcome-row">
+        <div><h2>Hola, operador <span class="wave">✦</span></h2><p>Administra los movimientos y supervisa el estado de tu vehículo.</p></div>
+        <div class="vehicle-select-wrap"><label for="vehicleSelect">VEHÍCULO ACTIVO</label><select id="vehicleSelect"><option value="">Cargando vehículos...</option></select></div>
+      </section>
+
+      <section class="metric-grid" id="monitoreo">
+        <article class="metric-card"><div class="metric-top"><span>Estado del vehículo</span><span class="metric-icon green">◉</span></div><div class="metric-value" id="vehicleState">—</div><div class="metric-foot" id="vehicleStateHint">Esperando información</div></article>
+        <article class="metric-card"><div class="metric-top"><span>Conexión WebSocket</span><span class="metric-icon blue">⌁</span></div><div class="metric-value" id="wsState">Offline</div><div class="metric-foot" id="wsHint">Canal en tiempo real</div></article>
+        <article class="metric-card"><div class="metric-top"><span>Comandos disponibles</span><span class="metric-icon violet">⌘</span></div><div class="metric-value" id="commandCount">0</div><div class="metric-foot">Registrados en la API</div></article>
+        <article class="metric-card"><div class="metric-top"><span>Eventos recientes</span><span class="metric-icon amber">≋</span></div><div class="metric-value" id="eventCount">0</div><div class="metric-foot">Últimos registros consultados</div></article>
+      </section>
+
+      <div class="section-heading" id="control"><div><div class="eyebrow">PRÁCTICA 4.1</div><h2>Control operativo</h2><p>Envía instrucciones mediante el canal WebSocket.</p></div><span class="section-tag">CONTROL REMOTO</span></div>
+      <section class="control-grid">
+        <article class="panel joystick-panel">
+          <div class="panel-heading"><div><h3>Joystick virtual</h3><p>Mantén presionada una dirección para enviar el movimiento.</p></div><span class="live-label"><i></i> EN VIVO</span></div>
+          <div class="joystick-area"><div class="joystick-ring"><button class="joy-btn joy-up" data-direction="adelante" aria-label="Avanzar">▲</button><button class="joy-btn joy-left" data-direction="izquierda" aria-label="Izquierda">◀</button><button class="joy-btn joy-center" id="stopBtn" aria-label="Detener">■</button><button class="joy-btn joy-right" data-direction="derecha" aria-label="Derecha">▶</button><button class="joy-btn joy-down" data-direction="atras" aria-label="Retroceder">▼</button></div></div>
+          <div class="joystick-caption"><span>↑ Avanzar</span><span>↓ Retroceder</span><span>■ Detener</span></div>
+          <div class="speed-control"><div><label for="speedRange">VELOCIDAD</label><strong><span id="speedValue">50</span><small>%</small></strong></div><input id="speedRange" type="range" min="0" max="100" value="50"><div class="range-labels"><span>Lenta</span><span>Máxima</span></div></div>
+          <div class="control-feedback" id="controlFeedback">Conecta la API y selecciona un vehículo para comenzar.</div>
+        </article>
+        <article class="panel command-panel">
+          <div class="panel-heading"><div><h3>Comandos rápidos</h3><p>Acciones registradas para este vehículo.</p></div><span class="panel-count" id="quickCount">0</span></div>
+          <div class="quick-grid" id="quickCommands"><div class="empty-state">Selecciona un vehículo para cargar sus comandos.</div></div>
+          <div class="divider"></div>
+          <div class="panel-heading compact"><div><h3>Última instrucción</h3><p id="lastCommand">Sin actividad</p></div><span class="last-command-icon">⌁</span></div>
+        </article>
+      </section>
+
+      <div class="section-heading" id="demos"><div><div class="eyebrow">AUTOMATIZACIÓN</div><h2>Demostraciones</h2><p>Consulta secuencias registradas y emite sus movimientos en orden.</p></div></div>
+      <section class="panel demo-panel"><div class="demo-toolbar"><div><h3>Secuencias disponibles</h3><p>Las duraciones y pausas se toman de la configuración guardada.</p></div><button class="outline-button" id="reloadDemos">↻ Actualizar</button></div><div id="demoList" class="demo-list"><div class="empty-state">No hay demostraciones cargadas.</div></div><p class="notice">Nota: la API actual permite consultar y administrar demostraciones, pero no incluye un endpoint de ejecución física. Esta interfaz envía los eventos por WebSocket; para accionar el microcontrolador se requiere un suscriptor/puente conectado al hardware.</p></section>
+
+      <div class="section-heading" id="historial"><div><div class="eyebrow">PRÁCTICA 4.2</div><h2>Monitoreo e historial</h2><p>Actividad reciente recibida desde la API y el canal en tiempo real.</p></div><button class="outline-button" id="reloadHistory">↻ Actualizar historial</button></div>
+      <section class="panel history-panel"><div class="history-header"><div><h3>Últimos eventos</h3><p>Máximo 10 registros · Más recientes primero</p></div><span class="history-badge">● MONITOREO</span></div><div class="table-wrap"><table><thead><tr><th>EVENTO</th><th>COMANDO</th><th>ORIGEN</th><th>FECHA / HORA</th></tr></thead><tbody id="historyBody"><tr><td colspan="4" class="empty-cell">Selecciona un vehículo para consultar el historial.</td></tr></tbody></table></div><div class="history-footer"><span id="historySummary">Sin registros</span><span>Actualización automática cada 8 segundos</span></div></section>
+      <footer>VEHÍCULO.IOT <span>·</span> Plataforma académica de control y monitoreo</footer>
+    </main>
+  </div>
+
+  <dialog id="settingsDialog" class="settings-dialog"><form method="dialog" id="settingsForm"><div class="dialog-top"><div><div class="eyebrow">CONFIGURACIÓN</div><h2>Conexión con el backend</h2></div><button class="close-button" value="cancel" aria-label="Cerrar">×</button></div><label for="apiUrl">URL base de la API</label><input id="apiUrl" type="url" placeholder="https://tu-api.example.com" required><small>Sin / al final. Ejemplo local: http://127.0.0.1:8000</small><label for="vehicleIdInput">ID del vehículo (opcional)</label><input id="vehicleIdInput" type="number" min="1" placeholder="Se seleccionará desde la lista"><div class="dialog-actions"><button class="outline-button" value="cancel">Cancelar</button><button class="primary-button" id="saveSettings" value="default">Guardar conexión</button></div></form></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
