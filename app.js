@@ -262,11 +262,13 @@
       return;
     }
 
+    
     let url;
     try {
-      url = new URL(api(`/ws/vehiculos/${encodeURIComponent(state.vehicleId)}`));
+      url = new URL(api(`/ws/${encodeURIComponent(state.vehicleId)}`));
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     } catch (e) {
+
       if ($('wsState')) $('wsState').textContent = 'Error';
       if ($('wsHint')) $('wsHint').textContent = e.message;
       return;
