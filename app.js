@@ -1,4 +1,5 @@
 (() => {
+  const DEFAULT_HTTPS_API = 'https://44-193-57-221.sslip.io';
   const $ = (id) => document.getElementById(id);
 
   const state = {
@@ -9,12 +10,14 @@
     demos: [],
     ws: null,
     wsReady: false,
+    wsReconnectTimer: null,
     polling: null,
     busyDemo: false,
     lastEvent: null,
   };
 
-  const api = (path) => `${state.api.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const api = (path) =>
+    `${state.api.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
 
   const normalize = (value) =>
     String(value ?? '')
@@ -218,7 +221,26 @@
     });
   }
 
+  function clearWsReconnect() {
+    if (state.wsReconnectTimer) {
+      clearTimeout(state.wsReconnectTimer);
+      state.wsReconnectTimer = null;
+    }
+  }
+
+  function scheduleWsReconnect() {
+    clearWsReconnect();
+    if (!state.api || !state.vehicleId) return;
+    state.wsReconnectTimer = setTimeout(() => {
+      if (!state.ws || state.ws.readyState === WebSocket.CLOSED) {
+        connectWs();
+      }
+    }, 4000);
+  }
+
   function connectWs() {
+    clearWsReconnect();
+
     if (state.ws) {
       state.ws.onopen = null;
       state.ws.onmessage = null;
@@ -256,6 +278,7 @@
 
       ws.onopen = () => {
         if (state.ws !== ws) return;
+        clearWsReconnect();
         state.wsReady = true;
         if ($('wsState')) $('wsState').textContent = 'Online';
         if ($('wsHint')) $('wsHint').textContent = 'Canal activo';
@@ -289,11 +312,13 @@
         if (state.ws !== ws) return;
         state.wsReady = false;
         if ($('wsState')) $('wsState').textContent = 'Offline';
-        if ($('wsHint')) $('wsHint').textContent = 'Canal desconectado';
+        if ($('wsHint')) $('wsHint').textContent = 'Canal desconectado · reintentando...';
+        scheduleWsReconnect();
       };
     } catch (e) {
       if ($('wsState')) $('wsState').textContent = 'Error';
       if ($('wsHint')) $('wsHint').textContent = e.message;
+      scheduleWsReconnect();
     }
   }
 
@@ -314,6 +339,7 @@
     const wsOpen = state.ws && state.ws.readyState === WebSocket.OPEN;
     if (!wsOpen) {
       toast('WebSocket desconectado. Revisa la conexión o el backend.');
+      connectWs();
       return false;
     }
 
@@ -556,6 +582,7 @@
 
   async function refreshAll() {
     if (!state.api) {
+      if ($('apiUrl') && !$('apiUrl').value) $('apiUrl').value = DEFAULT_HTTPS_API;
       $('settingsDialog')?.showModal();
       return;
     }
@@ -631,7 +658,7 @@
   $('reloadDemos')?.addEventListener('click', () => loadDemos().catch((e) => toast(e.message)));
 
   $('openSettings')?.addEventListener('click', () => {
-    if ($('apiUrl')) $('apiUrl').value = state.api;
+    if ($('apiUrl')) $('apiUrl').value = state.api || DEFAULT_HTTPS_API;
     if ($('vehicleIdInput')) $('vehicleIdInput').value = state.vehicleId;
     $('settingsDialog')?.showModal();
   });
@@ -663,6 +690,7 @@
     const check = validateApiUrl(state.api);
     if (!check.ok) {
       if (state.api) toast(check.error);
+      if ($('apiUrl') && !$('apiUrl').value) $('apiUrl').value = DEFAULT_HTTPS_API;
       $('settingsDialog')?.showModal();
       return;
     }
@@ -677,6 +705,7 @@
       }
     } catch (e) {
       toast(`No se pudo conectar: ${e.message}`);
+      if ($('apiUrl') && !$('apiUrl').value) $('apiUrl').value = DEFAULT_HTTPS_API;
       $('settingsDialog')?.showModal();
     }
 
@@ -696,12 +725,21 @@
 
   const savedApi = localStorage.getItem('iot_api_url') || '';
   const savedVehicle = localStorage.getItem('iot_vehicle_id') || '';
-  state.api = savedApi;
+
+  // Si en HTTPS había una URL http:// anterior guardada, la migramos automáticamente a https://44-193-57-221.sslip.io
+  if (window.location.protocol === 'https:' && savedApi.startsWith('http://')) {
+    state.api = DEFAULT_HTTPS_API;
+    localStorage.setItem('iot_api_url', DEFAULT_HTTPS_API);
+  } else {
+    state.api = savedApi || (window.location.protocol === 'https:' ? DEFAULT_HTTPS_API : '');
+  }
+
   state.vehicleId = savedVehicle;
 
   if (state.api) {
     initialize();
   } else {
+    if ($('apiUrl')) $('apiUrl').value = DEFAULT_HTTPS_API;
     $('settingsDialog')?.showModal();
   }
 })();
